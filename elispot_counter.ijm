@@ -7,9 +7,11 @@ run("Close All");
 #@ Integer (label = "Kernel size for Large Spot Filter", style = "spinner", value=5000) BigSpotSize 
 #@ Integer (label = "Intensity Threshold for Large Spots", style = "spinner", value=22) bigSpotThresh
 #@ Integer (label = "Intensity Threshold for Small Spots", style = "spinner", value=10) smallSpotThresh
+#@ Boolean (label = "Backgound subtraction", value=true) doBackgroundSub
 #@ Boolean (label = "Allow small Spots", value=true) allowSmallSpots 
 #@ Boolean (label = "Save Masks", value=true) saveMasks
 
+var backgroundThreshold = 250; //hardcoded but check if wrong - this is for determinging the well region
 
 flist = getFileList(dir1);
 
@@ -35,7 +37,12 @@ meanI = getTitle();
 
 //get difference of each image from the background
 imageCalculator("Difference create 32-bit stack", regI,meanI);
+
 run("8-bit");
+if(doBackgroundSub){
+	run("Subtract Background...", "rolling=50 stack");
+}
+
 
 //get well boundary 
 getWellSoon(meanI);
@@ -128,11 +135,14 @@ function getWellSoon(meanI){
 	/*Function to find the well region 
 	Threshold hard-coded*/	
 	selectWindow(meanI);
+	
 	run("8-bit");
-	setThreshold(0,209);
+	//setThreshold(0,209);//250
+	setThreshold(0,backgroundThreshold);
 	run("Convert to Mask");
 	run("Keep Largest Region");
 	rename("well_well_well");
+	
 	close(meanI);
 	
 }
